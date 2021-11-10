@@ -24,7 +24,7 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 
 from nessie.externals.sis_student_api import get_term_gpas_registration_demog
-from nessie.merged.student_demographics import add_demographics_rows, ethnicity_filter_values,\
+from nessie.merged.student_demographics import ethnicity_filter_values,\
     parse_sis_demographics_api, simplified_ethnicities, simplified_gender, underrepresented_minority
 
 
@@ -48,34 +48,6 @@ class TestStudentDemographics:
         assert parsed['visa']['type'] == 'F1'
         assert parsed['nationalities'] == ['Korea, Republic of']
         assert parsed['filtered_ethnicities'] == ['Korean / Korean-American']
-
-    def test_add_demographics_rows(self, app):
-        import tempfile
-        with tempfile.TemporaryFile() as demo_file, tempfile.TemporaryFile() as ethn_file, tempfile.TemporaryFile() as visa_file:
-            feed_files = {
-                'demographics': demo_file,
-                'ethnicities': ethn_file,
-                'visas': visa_file,
-            }
-            feed_counts = {
-                'demographics': 0,
-                'ethnicities': 0,
-                'visas': 0,
-            }
-            raw_feed = get_term_gpas_registration_demog('1234567890').get('demographics')
-            parsed = add_demographics_rows('1234567890', raw_feed, feed_files, feed_counts)
-            assert not parsed.get('filtered_ethnicities')
-            assert parsed['ethnicities'] == ['Korean / Korean-American', 'White']
-
-            feed_files['demographics'].seek(0)
-            assert feed_files['demographics'].read() == b'1234567890\tFemale\tFalse\n'
-            assert feed_counts['demographics'] == 1
-            feed_files['ethnicities'].seek(0)
-            assert feed_files['ethnicities'].read() == b'1234567890\tKorean / Korean-American\n'
-            assert feed_counts['ethnicities'] == 1
-            feed_files['visas'].seek(0)
-            assert feed_files['visas'].read() == b'1234567890\tG\tF1\n'
-            assert feed_counts['visas'] == 1
 
     def test_simplified_ethnicities(self, app):
         assert ['African-American / Black'] == simplified_ethnicities({

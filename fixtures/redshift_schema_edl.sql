@@ -1,4 +1,55 @@
+CREATE SCHEMA IF NOT EXISTS {redshift_schema_edl_external};
+
+CREATE TABLE IF NOT EXISTS {redshift_schema_edl_external}.student_academic_plan_data (
+    student_id VARCHAR NOT NULL,
+    academic_career_cd VARCHAR,
+    academic_program_status_cd VARCHAR,
+    academic_plan_type_cd VARCHAR
+);
+
 CREATE SCHEMA IF NOT EXISTS {redshift_schema_edl};
+
+CREATE TABLE IF NOT EXISTS {redshift_schema_edl}.academic_standing (
+    sid VARCHAR NOT NULL,
+    term_id VARCHAR NOT NULL,
+    acad_standing_action VARCHAR NOT NULL,
+    acad_standing_status VARCHAR NOT NULL,
+    action_date DATE
+);
+
+CREATE TABLE IF NOT EXISTS {redshift_schema_edl}.advising_note_attachments (
+    advising_note_id VARCHAR NOT NULL,
+    sid VARCHAR NOT NULL,
+    student_note_nr VARCHAR NOT NULL,
+    created_by VARCHAR NOT NULL,
+    user_file_name VARCHAR NOT NULL,
+    sis_file_name VARCHAR NOT NULL,
+    edl_load_date DATE,
+    is_historical BOOLEAN
+);
+
+CREATE TABLE IF NOT EXISTS {redshift_schema_edl}.advising_note_topics (
+    advising_note_id VARCHAR NOT NULL,
+    sid VARCHAR NOT NULL,
+    student_note_nr VARCHAR NOT NULL,
+    note_topic VARCHAR NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS {redshift_schema_edl}.advising_notes (
+    id VARCHAR NOT NULL,
+    sid VARCHAR NOT NULL,
+    student_note_nr VARCHAR NOT NULL,
+    advisor_sid VARCHAR NOT NULL,
+    appointment_id VARCHAR,
+    note_category VARCHAR,
+    note_subcategory VARCHAR,
+    note_body VARCHAR,
+    created_by VARCHAR,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_by VARCHAR,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    edl_load_date DATE
+);
 
 CREATE TABLE IF NOT EXISTS {redshift_schema_edl}.student_citizenships (
     sid VARCHAR NOT NULL,

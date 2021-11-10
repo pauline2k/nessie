@@ -24,7 +24,6 @@ ENHANCEMENTS, OR MODIFICATIONS.
 """
 from collections import defaultdict
 
-from flask import current_app as app
 from nessie.lib.util import write_to_tsv_file
 
 UNDERREPRESENTED_GROUPS = {'Black/African American', 'Hispanic/Latino', 'American Indian/Alaska Native'}
@@ -41,24 +40,19 @@ GENDER_CODE_MAP = {
 
 
 def add_demographics_rows(sid, feed, feed_files, feed_counts):
-    use_edl = app.config['FEATURE_FLAG_EDL_DEMOGRAPHICS']
-    parsed = feed if use_edl else parse_sis_demographics_api(feed)
-    if parsed:
-        if use_edl:
-            filtered_ethnicities = filter_ethnicities(parsed.get('ethnicities', []))
-        else:
-            filtered_ethnicities = parsed.pop('filtered_ethnicities', [])
+    if feed:
+        filtered_ethnicities = filter_ethnicities(feed.get('ethnicities', []))
         for ethn in filtered_ethnicities:
             feed_counts['ethnicities'] += write_to_tsv_file(feed_files['ethnicities'], [sid, ethn])
 
         feed_counts['demographics'] += write_to_tsv_file(
             feed_files['demographics'],
-            [sid, parsed.get('gender'), parsed.get('underrepresented', False)],
+            [sid, feed.get('gender'), feed.get('underrepresented', False)],
         )
-        visa = parsed.get('visa')
+        visa = feed.get('visa')
         if visa:
             feed_counts['visas'] += write_to_tsv_file(feed_files['visas'], [sid, visa.get('status'), visa.get('type')])
-    return parsed
+    return feed
 
 
 def refresh_rds_demographics(rds_schema, rds_dblink_to_redshift, redshift_schema, transaction):

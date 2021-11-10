@@ -165,19 +165,18 @@ def student_tables(app):
 
     for schema in ['asc_test', 'coe_test', 'student_test']:
         rds.execute(f'DROP SCHEMA {schema} CASCADE')
-        redshift.execute(f'DROP SCHEMA {schema} CASCADE')
+        redshift.execute(f'DROP SCHEMA IF EXISTS {schema} CASCADE')
     for schema in ['advisee_test', 'calnet_test', 'edl_test', 'undergrads_test']:
-        redshift.execute(f'DROP SCHEMA {schema} CASCADE')
+        redshift.execute(f'DROP SCHEMA IF EXISTS {schema} CASCADE')
 
 
 @pytest.fixture()
 def sis_note_tables(app):
     """Use Postgres to mock the Redshift SIS note schemas on local test runs."""
     from nessie.externals import redshift
-    internal_schema = app.config['REDSHIFT_SCHEMA_SIS_ADVISING_NOTES_INTERNAL']
-    redshift.execute(f'DROP SCHEMA IF EXISTS {internal_schema} CASCADE')
-    redshift.execute(f'CREATE SCHEMA {internal_schema}')
-    redshift.execute(f"""CREATE TABLE {internal_schema}.advising_note_attachments
+    internal_schema = app.config['REDSHIFT_SCHEMA_EDL']
+    redshift.execute(f'CREATE SCHEMA IF NOT EXISTS {internal_schema}')
+    redshift.execute(f"""CREATE TABLE IF NOT EXISTS {internal_schema}.advising_note_attachments
     (
         advising_note_id character varying(513),
         sid character varying(256),

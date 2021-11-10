@@ -28,33 +28,13 @@ import json
 from nessie.lib.queries import student_schema
 from nessie.merged.sis_profile import merge_sis_profile_academic_status, parse_merged_sis_profile
 import pytest
-from tests.util import capture_app_logs, mock_s3
-
-
-@pytest.fixture()
-def sis_api_profiles(app, student_tables):
-    from nessie.externals import redshift
-    from nessie.jobs.import_sis_student_api import ImportSisStudentApi
-    with mock_s3(app):
-        ImportSisStudentApi().run_wrapped()
-    sql = f'SELECT sid, feed FROM {student_schema()}.sis_api_profiles'
-    return redshift.fetch(sql)
+from tests.util import capture_app_logs
 
 
 @pytest.fixture()
 def sis_api_degree_progress(app, student_tables):
     from nessie.externals import redshift
     sql = f'SELECT sid, feed FROM {student_schema()}.sis_api_degree_progress'
-    return redshift.fetch(sql)
-
-
-@pytest.fixture()
-def sis_api_last_registrations(app, metadata_db, student_tables):
-    from nessie.externals import redshift
-    from nessie.jobs.import_registrations import ImportRegistrations
-    with mock_s3(app):
-        ImportRegistrations().run_wrapped()
-    sql = f'SELECT sid, feed FROM {student_schema()}.student_last_registrations'
     return redshift.fetch(sql)
 
 
