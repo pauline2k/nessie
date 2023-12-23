@@ -1,12 +1,48 @@
 <template>
-  <div v-if="chartOptions">
-    <highcharts :options="chartOptions"></highcharts>
+  <div>
+    <b-row>
+      <b-col>
+        <h2>🎱 RTL DevOps Project Timeline</h2>
+      </b-col>
+      <b-col>
+        <div>
+          <strong v-if="selectedSchedule && !editing">{{ selectedSchedule.name }}</strong>
+          <input v-if="selectedSchedule && editing" v-model="selectedSchedule.name" class="w-100" />
+        </div>
+        <div>
+          <span :style="'font-size: 15px; color:' + colors.red">⬤</span> Design
+          <span v-if="selectedSchedule && !editing">: <strong>{{ formatDate(selectedSchedule.design) }}</strong></span>
+          <input v-if="selectedSchedule && editing" v-model="selectedSchedule.design" />
+        </div>
+        <div>
+          <span :style="'font-size: 15px; color:' + colors.green">⬤</span> Development
+          <span v-if="selectedSchedule && !editing">: <strong>{{ formatDate(selectedSchedule.development) }}</strong></span>
+          <input v-if="selectedSchedule && editing" v-model="selectedSchedule.development" />
+        </div>
+        <div>
+          <span :style="'font-size: 15px; color:' + colors.blue">⬤</span> QA/bugfix
+          <span v-if="selectedSchedule && !editing">: <strong>{{ formatDate(selectedSchedule.qa) }}</strong></span>
+          <input v-if="selectedSchedule && editing" v-model="selectedSchedule.qa" />
+        </div>
+        <div>
+          <span :style="'font-size: 15px; color:' + colors.purple">⬤</span> Production release
+          <span v-if="selectedSchedule && !editing">: <strong>{{ formatDate(selectedSchedule.release) }}</strong></span>
+          <input v-if="selectedSchedule && editing" v-model="selectedSchedule.release" />
+        </div>
+        <b-btn v-if="selectedSchedule && !editing" @click="editing = true">Edit</b-btn>
+        <b-btn v-if="editing" @click="updateSchedule">Save</b-btn>
+        <b-btn v-if="editing" @click="cancelUpdateSchedule">Cancel</b-btn>
+      </b-col>
+    </b-row>
+    <div v-if="chartOptions">
+      <highcharts :options="chartOptions"></highcharts>
+    </div>
   </div>
 </template>
 
 <script>
 import {Chart} from 'highcharts-vue'
-import {get8BallSchedules} from '@/api/magicEightBall'
+import {get8BallSchedules, update8BallSchedule} from '@/api/magicEightBall'
 
 export default {
   components: {
@@ -22,10 +58,27 @@ export default {
       paleRed: '#ffbbbb',
       paleGreen: '#aaeeaa',
       paleBlue: '#bbccff',
-    }
+    },
+    editing: false,
+    schedules: [],
+    selectedSchedule: null,
+    selectedScheduleIndex: null
   }),
   created() {
     get8BallSchedules().then(schedules => {
+      this.schedules = schedules
+      this.renderTimeline()
+    })
+  },
+  methods: {
+    cancelUpdateSchedule() {
+      this.selectedSchedule = this.$_.clone(this.schedules[this.selectedScheduleIndex])
+      this.editing = false
+    },
+    formatDate(datestamp) {
+      return new Date(datestamp + 'T00:00-1200').toDateString()
+    },
+    renderTimeline() {
       let series = {
         design: [],
         development: [],
@@ -35,7 +88,7 @@ export default {
       let scheduleMin = null
       let scheduleMax = null
 
-      this.$_.each(schedules, s => {
+      this.$_.each(this.schedules, s => {
         series.design.push({
           name: s.name,
           low: new Date(s.design).getTime(),
@@ -49,7 +102,7 @@ export default {
         series.qa.push({
           name: s.name,
           low: new Date(s.qa).getTime(),
-          high: new Date(s.release).getTime()
+          high: new Date(s.release).getTime(),
         })
         if (!scheduleMin || scheduleMin > s.design) {
           scheduleMin = s.design
@@ -60,6 +113,7 @@ export default {
       })
 
       const colors = this.colors
+      const selectSchedule = this.selectSchedule
 
       this.chartOptions = {
         chart: {
@@ -71,29 +125,14 @@ export default {
         legend: {
           enabled: false
         },
-        subtitle: {
-          useHTML: true,
-          text: '<br/><span style="font-size: 15px; color: ' + colors.red + '">⬤</span> Design<br/>' +
-            '<span style="font-size: 15px; color: ' + colors.green + '">⬤</span> Development<br/>' +
-            '<span style="font-size: 15px; color: ' + colors.blue + '">⬤</span> QA/bugfix<br/>' +
-            '<span style="font-size: 15px; color: ' + colors.purple + '">⬤</span> Production release'
-        },
-        title: {
-          text: '🎱 RTL DevOps Project Timeline'
-        },
-        tooltip: {
-          shared: true,
-          useHTML: true,
-          formatter: function() {
-            return '<b>' + this.points[0].point.name + '</b>' +
-              (this.points[0].point.low === this.points[0].point.high ? '' : '<br/><span style="color: ' + colors.red + '">Design: ' + new Date(this.points[0].point.low + 100000000).toDateString() + ' </span>') +
-              (this.points[0].point.high === this.points[1].point.high ? '' : '<br/><span style="color: ' + colors.green + '">Development: ' + new Date(this.points[0].point.high + 100000000).toDateString() + ' </span>') +
-              '<br/><span style="color: ' + colors.blue + '">QA/bugfix : ' + new Date(this.points[1].point.high + 100000000).toDateString() + ' </span>' +
-              '<br/><span style="color: ' + colors.purple + '">Production release: ' + new Date(this.points[2].point.high + 100000000).toDateString() + ' </span>'
-          }
-        },
+        tooltip: false,
         xAxis: {
-          type: 'category'
+          type: 'category',
+          labels: {
+            events: {
+              click: function() { selectSchedule(this.pos) }
+            }
+          }
         },
         yAxis: {
           type: 'datetime',
@@ -101,7 +140,25 @@ export default {
           max: new Date(scheduleMax).getTime(),
           title: {
             text: null
-          }
+          },
+          plotLines: [
+            {
+              color: '#aaa',
+              label: {
+                rotation: 0,
+                style: {
+                  color: '#aaa'
+                },
+                text: new Date().toDateString()
+              },
+              width: 1,
+              zIndex: 9999,
+              value: new Date().getTime(),
+            }
+          ]
+        },
+        title: {
+          text: null
         },
         plotOptions: {
           dumbbell: {
@@ -148,7 +205,41 @@ export default {
         ]
       }
       this.$ready()
-    })
+    },
+    selectSchedule(index) {
+      this.selectedScheduleIndex = index
+      this.selectedSchedule = this.$_.clone(this.schedules[index])
+    },
+    updateSchedule() {
+      update8BallSchedule(this.selectedSchedule.id, this.selectedSchedule).then(updatedSchedule => {
+        this.schedules.forEach((schedule, index) => {
+          if (schedule.id === updatedSchedule.id) {
+            this.schedules.splice(index, 1, updatedSchedule)
+            this.selectSchedule(index)
+            console.log(this.schedules)
+          }
+        })
+        this.renderTimeline()
+        this.editing = false
+      })
+    }
   }
 }
 </script>
+
+<style scoped>
+h2 {
+  font-size: 30px;
+}
+</style>
+
+<style>
+.highcharts-xaxis-labels text {
+  cursor: pointer !important;
+  font-size: 16px !important;
+}
+
+.highcharts-xaxis-labels text:hover {
+  font-weight: bold;
+}
+</style>
