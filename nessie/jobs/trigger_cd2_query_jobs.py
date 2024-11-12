@@ -28,7 +28,7 @@ import time
 
 from flask import current_app as app
 from nessie.externals import canvas_data_2, dynamodb
-from nessie.jobs.background_job import BackgroundJob
+from nessie.jobs.background_job import BackgroundJob, BackgroundJobError
 
 
 """Logic to trigger query Canvas Data 2 snapshot job with Instructure."""
@@ -50,21 +50,33 @@ class TriggerCD2QueryJobs(BackgroundJob):
             # Change table name dynamically as needed
             table = dynamodb_resource.Table(app.config['CD2_DYNAMODB_METADATA_TABLE'])
 
-            # Insert the item into DynamoDB
-            response = table.put_item(
-                Item={
-                    'cd2_query_job_id': nessie_job_id,
-                    'created_at': datetime.now(timezone.utc).isoformat(),
-                    'namespace': namespace,
-                    'workflow_status': 'table_query_job_triggered',
-                    'updated_at': datetime.now(timezone.utc).isoformat(),
-                    'environment': environment_name,
-                    'table_query_jobs_id': table_query_jobs,
-                    'snapshot_objects': [],
+            # Prepare the item for insertion
+            item = {
+                'cd2_query_job_id': nessie_job_id,
+                'created_at': datetime.now(timezone.utc).isoformat(),
+                'namespace': namespace,
+                'updated_at': datetime.now(timezone.utc).isoformat(),
+                'environment': environment_name,
+                'table_query_jobs_id': table_query_jobs,
+                'snapshot_objects': [],
+                'corrected_snapshot_objects': [],
+                'corrected_snapshot_env': '',
+                'workflow_status': {
+                    'table_query_trigger_status': 'success',
+                    'snapshot_retrieved_status': '',
+                    'snapshot_resync_status': '',
+                    'retrieve_download_urls_status': '',
+                    'dispatch_for_download_status': '',
+                    'download_validation_status': '',
+                    'overall_ingest_status': '',
                 },
-            )
+                'nessie_job_components': [nessie_job_id],
+            }
 
-            app.logger.info('CD2 metadata updated successfully in DynamoDB', response)
+            # Insert the record item into CD2 DynamoDB metadata table
+            response = table.put_item(Item=item)
+
+            app.logger.info('CD2 metadata updated successfully in DynamoDB: %s', response)
             return True
 
         except Exception as e:
@@ -89,6 +101,7 @@ class TriggerCD2QueryJobs(BackgroundJob):
 
         if failed_query_jobs:
             app.logger.error(f'Query snapshot job trigger failed for some tables. Failed job triggers are : {failed_query_jobs}')
+            raise BackgroundJobError(f'Query snapshot job trigger failed for some tables. Failed job triggers are : {failed_query_jobs}.')
         else:
             app.logger.info(f'Started query snapshot jobs and retrived job IDs for {len(cd2_table_query_jobs)} Canvas data 2 tables')
 
@@ -96,7 +109,7 @@ class TriggerCD2QueryJobs(BackgroundJob):
 
         if status is False:
             app.logger.error('Inserting CD2 job metadata failed.')
-            return ('Inserting CD2 job metadata failed.')
+            raise BackgroundJobError('Inserting CD2 job metadata failed. Aborting Ingest')
         else:
             app.logger.info('Triggered Query snapshot Jobs on Canvas Data DAP API successfully. Inserted job metadata on DynamoDB tables')
             return ('Triggered Query snapshot Jobs on Canvas Data DAP API successfully. Inserted job metadata on DynamoDB tables for tracking')
