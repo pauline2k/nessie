@@ -440,7 +440,7 @@ def sync_file_to_s3():
 @app.route('/api/job/trigger_cd2_query_jobs', methods=['POST'])
 @auth_required
 def trigger_cd2_query_jobs():
-    job_started = TriggerCD2QueryJobs.run_async()
+    job_started = TriggerCD2QueryJobs().run_async()
     return respond_with_status(job_started)
 
 

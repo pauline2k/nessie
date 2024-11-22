@@ -45,12 +45,14 @@ class RetrieveCanvasData2Snapshots(BackgroundJob):
 
         for table_job in cd2_table_jobs:
             app.logger.info(f'Retrieving job status for table {table_job["table"]}')
-
+            # Get table job status for a max of 10 retries
             counter = 0
             max_retries = 10
+
             while counter < max_retries:
                 request_status = canvas_data_2.get_job_status(secret, headers, table_job['job_id'])
                 job_status = request_status.json().get('status')
+                counter += 1
 
                 # Check if status is 'complete' or 'failed'
                 if job_status == 'complete':
@@ -66,15 +68,16 @@ class RetrieveCanvasData2Snapshots(BackgroundJob):
                     table_job['job_status'] = 'running'
                     table_job['file_objects'] = []
                     # TODO: Remove the timer once metadata tables are used to track job status
-                    app.logger.info('Wait for query snapshots jobs to complete. Sleep for 1 min')
-                    time.sleep(1 * 60)
-                    counter += 1
+                    # Adding sleep time for 10 seconds reduces round trips and avoids Canavs DAP API throttling
+                    app.logger.debug('Wait for query snapshots jobs to complete. Sleep for 10 seconds before retry')
+                    time.sleep(1 * 10)
                 elif job_status == 'failed':
                     app.logger.error(f'Job {table_job["job_id"]} failed to retrieve file objects for table {table_job["table"]}')
                     table_job['job_status'] = 'failed'
                     table_job['file_objects'] = []
                     break
-        # After 10 retries, if the job is still 'running', it will break the loop
+
+            # After 10 retries, if the job is still 'running', it will break the loop
             if counter >= max_retries:
                 app.logger.error(
                     f'Maximum retries reached for table {table_job["table"]} having job id {table_job["job_id"]}. '
