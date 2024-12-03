@@ -249,11 +249,13 @@ RDS_APP_RIPLEY_USER = 'ripley rds username'
 RDS_DBLINK_ROLE_DAMIEN = 'damien_role'
 RDS_DBLINK_ROLE_DIABLO = 'diablo_role'
 REDSHIFT_DBLINK_GROUP = 'nessie_dblink_group'
+REDSHIFT_LA_REPORTS_DBLINK_GROUP = 'la_reports_dblink_group'
 
 # The following internal schemas are consistent across environments and do not need to be overridden locally.
 REDSHIFT_SCHEMA_ADVISOR_INTERNAL = 'boac_advisor'
 REDSHIFT_SCHEMA_ASC = 'boac_advising_asc'
 REDSHIFT_SCHEMA_ASC_ADVISING_NOTES_INTERNAL = 'asc_advising_notes'
+REDSHIFT_SCHEMA_BI_REPORTS_BOA_ADVISING = 'bi_reports_boa_advising'
 REDSHIFT_SCHEMA_BOAC = 'boac_analytics'
 REDSHIFT_SCHEMA_COE = 'boac_advising_coe'
 REDSHIFT_SCHEMA_DATA_SCIENCE_ADVISING_INTERNAL = 'data_science_advising'
