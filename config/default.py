@@ -230,6 +230,9 @@ RDS_SCHEMA_SIS_INTERNAL = 'sis_data'
 RDS_SCHEMA_STUDENT = 'student'
 RDS_SCHEMA_TERMS = 'terms'
 
+# Reports RDS schemas
+RDS_SCHEMA_BI_REPORTS_BOA_ADVISING = 'bi_reports_boa_advising'
+
 REDSHIFT_DATABASE = 'database'
 REDSHIFT_HOST = 'redshift cluster'
 REDSHIFT_PASSWORD = 'password'
@@ -244,6 +247,9 @@ REDSHIFT_APP_BOA_USER = 'boa redshift username'
 
 # Ripley limited access credentials to nessie rds and redshift
 RDS_APP_RIPLEY_USER = 'ripley rds username'
+
+# Tableau limited access credentials to nessie rds
+RDS_APP_TABLEAU_USER = 'tableau rds username'
 
 # RDS and Redshift readonly roles for dblink user mapping
 RDS_DBLINK_ROLE_DAMIEN = 'damien_role'
