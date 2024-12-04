@@ -34,16 +34,16 @@ import psycopg2.extras
 """Client code to run queries against RDS."""
 
 
-def execute(sql, params=None, log_query=True):
-    with _get_cursor() as cursor:
+def execute(sql, params=None, log_query=True, rds_uri=None):
+    with _get_cursor(rds_uri=rds_uri) as cursor:
         if not cursor:
             return None
         else:
             return _execute(sql, cursor, params, 'write', log_query)
 
 
-def fetch(sql, params=None, log_query=True):
-    with _get_cursor(operation='read') as cursor:
+def fetch(sql, params=None, log_query=True, rds_uri=None):
+    with _get_cursor(operation='read', rds_uri=rds_uri) as cursor:
         if not cursor:
             return None
         else:
@@ -69,17 +69,18 @@ class Transaction():
 
 
 @contextmanager
-def transaction():
-    with _get_cursor(autocommit=False) as cursor:
+def transaction(rds_uri=None):
+    with _get_cursor(autocommit=False, rds_uri=rds_uri) as cursor:
         yield Transaction(cursor)
 
 
 @contextmanager
-def _get_cursor(autocommit=True, operation='write'):
+def _get_cursor(autocommit=True, operation='write', rds_uri=None):
+    uri = rds_uri or app.config.get('SQLALCHEMY_DATABASE_URI')
     with get_psycopg_cursor(
         operation=operation,
         autocommit=autocommit,
-        uri=app.config.get('SQLALCHEMY_DATABASE_URI'),
+        uri=uri,
     ) as cursor:
         yield cursor
 
