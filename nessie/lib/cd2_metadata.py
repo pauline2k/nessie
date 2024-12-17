@@ -42,20 +42,31 @@ def get_cd2_query_jobs_by_date_and_environment(date_str=None, environment=None):
             today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
             date_str = today_str
 
-        # Define the basic filter expression and attribute values
-        filter_expression = 'begins_with(created_at, :date)'
-        expression_attribute_values = {':date': date_str}
+        app.logger.info(f'Querying with date_str: {date_str}, environment: {environment}')
 
-        # Add the environment filter if provided
         if environment:
-            filter_expression += ' AND environment = :env'
-            expression_attribute_values[':env'] = environment
+            # Use the GSI when environment is provided
+            key_condition_expression = 'environment = :env AND begins_with(created_at, :date)'
+            expression_attribute_values = {
+                ':env': environment,
+                ':date': date_str,
+            }
 
-        # Scan and filter items based on date and (optionally) environment
-        response = table.scan(
-            FilterExpression=filter_expression,
-            ExpressionAttributeValues=expression_attribute_values,
-        )
+            response = table.query(
+                IndexName=app.config['CD2_METADATA_TABLE_ENV_INDEX'],
+                KeyConditionExpression=key_condition_expression,
+                ExpressionAttributeValues=expression_attribute_values,
+            )
+        else:
+            # Use scan when environment is not provided
+            filter_expression = 'begins_with(created_at, :date)'
+            expression_attribute_values = {':date': date_str}
+
+            response = table.scan(
+                FilterExpression=filter_expression,
+                ExpressionAttributeValues=expression_attribute_values,
+                ConsistentRead=True,
+            )
 
         # Retrieve query jobs for the specified date (and environment, if provided)
         cd2_query_jobs = response.get('Items', [])
