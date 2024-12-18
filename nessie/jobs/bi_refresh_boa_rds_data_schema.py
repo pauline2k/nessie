@@ -27,38 +27,38 @@ from flask import current_app as app
 from nessie.externals import redshift
 from nessie.jobs.background_job import BackgroundJob, BackgroundJobError, verify_external_schema
 from nessie.lib.util import resolve_sql_template
-# UNCOMMENT next line and remove previous line to re-instate get_s3_boa_rds_data_daily_path()
+# UNCOMMENT next line and remove previous line to re-instate get_s3_bi_boa_rds_data_daily_path()
 # from nessie.lib.util import get_s3_boa_rds_data_daily_path, resolve_sql_template
 
 """Logic for BOA RDS Data schema creation and refresh job."""
 
 
-class RefreshBoaRdsDataSchema(BackgroundJob):
+class RefreshBiBoaRdsDataSchema(BackgroundJob):
 
-    external_schema = app.config['REDSHIFT_SCHEMA_BOA_RDS_DATA']
+    external_schema = app.config['BI_REDSHIFT_SCHEMA_BOA_RDS_DATA']
 
     def run(self):
         app.logger.info('Starting full BOA RDS Data refresh...')
         return self.create_schema()
 
     def create_schema(self):
-        # s3_boa_rds_daily = get_s3_boa_rds_data_daily_path()
-        # TODO: UNCOMMENT previous line to re-instate get_s3_boa_rds_data_daily_path()
-        # REMOVE next line that manually sets daily path using TEMP config BOA_RDS_TEST_DATE_PATH
-        s3_boa_rds_daily = app.config['BOA_RDS_TEST_DATE_PATH']
+        # s3_boa_rds_daily = get_s3_bi_boa_rds_data_daily_path()
+        # TODO: UNCOMMENT previous line to re-instate get_s3_bi_boa_rds_data_daily_path()
+        # REMOVE next line that manually sets daily path using TEMP config BI_LOCH_S3_BI_BOA_RDS_DATA_PATH_TEST
+        s3_boa_rds_daily = app.config['BI_LOCH_S3_BOA_RDS_DATA_PATH_TEST']
         s3_path = '/'.join([f"s3://{app.config['LOCH_S3_BUCKET']}", s3_boa_rds_daily])
 
         app.logger.info('Executing SQL...')
         app.logger.info('Dropping External Schema now that we have found timely S3 BOA RDS Data')
         redshift.drop_external_schema(self.external_schema)
-        sql_filename = 'create_boa_rds_data_schema.template.sql'
-        resolved_ddl = resolve_sql_template(sql_filename, boa_rds_data_path=s3_path)
+        sql_filename = 'bi_create_boa_rds_data_schema.template.sql'
+        resolved_ddl = resolve_sql_template(sql_filename, bi_loch_s3_boa_rds_data_path=s3_path)
         if not redshift.execute_ddl_script(resolved_ddl):
             raise BackgroundJobError(f'Redshift execute_ddl_script failed on {sql_filename}')
         verify_external_schema(
             self.external_schema,
             resolved_ddl,
-            is_zero_count_acceptable=app.config['BOA_RDS_ZERO_COUNT_ACCEPTABLE'],
+            is_zero_count_acceptable=app.config['BI_BOA_RDS_ZERO_COUNT_ACCEPTABLE'],
         )
         app.logger.info('Redshift schema created.')
 

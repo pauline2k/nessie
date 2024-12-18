@@ -112,8 +112,8 @@ def get_s3_boa_api_daily_path(cutoff=None):
     return app.config['LOCH_S3_BOA_DATA_API_PATH'] + '/daily/' + hashed_datestamp(cutoff)
 
 
-def get_s3_boa_rds_data_daily_path(cutoff=None):
-    return app.config['LOCH_S3_BOA_RDS_DATA_PATH_DAILY'] + '/' + localized_datestamp(cutoff) + '/public'
+def get_s3_bi_boa_rds_data_daily_path(cutoff=None):
+    return app.config['BI_LOCH_S3_BOA_RDS_DATA_PATH_DAILY'] + '/' + localized_datestamp(cutoff) + '/public'
 
 
 def get_s3_boac_analytics_incremental_path(cutoff=None):
@@ -198,6 +198,13 @@ def resolve_sql_template_string(template_string, **kwargs):
     s3_prefix = 's3://' + app.config['LOCH_S3_BUCKET'] + '/'
     s3_protected_prefix = 's3://' + app.config['LOCH_S3_PROTECTED_BUCKET'] + '/'
     template_data = {
+        'bi_rds_boa_advising_role': app.config['BI_RDS_BOA_ADVISING_ROLE'],
+        'bi_rds_ce3_user': app.config['BI_RDS_CE3_USER'],
+        'bi_rds_schema_boa_advising': app.config['BI_RDS_SCHEMA_BOA_ADVISING'],
+        'bi_rds_tableau_user': app.config['BI_RDS_TABLEAU_USER'],
+        'bi_redshift_la_reports_dblink_group': app.config['BI_REDSHIFT_LA_REPORTS_DBLINK_GROUP'],
+        'bi_redshift_schema_boa_rds_data': app.config['BI_REDSHIFT_SCHEMA_BOA_RDS_DATA'],
+        'bi_redshift_schema_boa_advising': app.config['BI_REDSHIFT_SCHEMA_BOA_ADVISING'],
         'earliest_academic_history_term_id': app.config['EARLIEST_ACADEMIC_HISTORY_TERM_ID'],
         'earliest_term_id': earliest_term_id(),
         'edl_iam_role': app.config['AWS_EDL_ROLE_ARN'],
@@ -230,7 +237,6 @@ def resolve_sql_template_string(template_string, **kwargs):
         'redshift_schema_asc': app.config['REDSHIFT_SCHEMA_ASC'],
         'redshift_schema_asc_advising_notes': app.config['REDSHIFT_SCHEMA_ASC_ADVISING_NOTES'],
         'redshift_schema_asc_advising_notes_internal': app.config['REDSHIFT_SCHEMA_ASC_ADVISING_NOTES_INTERNAL'],
-        'redshift_schema_boa_rds_data': app.config['REDSHIFT_SCHEMA_BOA_RDS_DATA'],
         'redshift_schema_boac': app.config['REDSHIFT_SCHEMA_BOAC'],
         'redshift_schema_canvas': app.config['REDSHIFT_SCHEMA_CANVAS'],
         'redshift_schema_canvas_data_2': app.config['REDSHIFT_SCHEMA_CANVAS_DATA_2'],
@@ -259,7 +265,6 @@ def resolve_sql_template_string(template_string, **kwargs):
         'redshift_schema_ycbm_internal': app.config['REDSHIFT_SCHEMA_YCBM_INTERNAL'],
         'redshift_iam_role': app.config['REDSHIFT_IAM_ROLE'],
         'loch_s3_asc_data_path': s3_prefix + get_s3_asc_daily_path(),
-        'loch_s3_boa_rds_path_daily': s3_prefix + get_s3_boa_rds_data_daily_path(),
         'loch_s3_boac_analytics_incremental_path': s3_prefix + get_s3_boac_analytics_incremental_path(),
         'loch_s3_calnet_data_path': s3_prefix + get_s3_calnet_daily_path(),
         'loch_s3_canvas_data_path_today': s3_prefix + get_s3_canvas_daily_path(),

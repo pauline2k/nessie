@@ -32,6 +32,8 @@ from flask import current_app as app, request
 from nessie.api.auth_helper import auth_required
 from nessie.api.errors import BadRequestError
 from nessie.jobs.background_job import ChainedBackgroundJob
+from nessie.jobs.bi_refresh_boa_rds_data_schema import RefreshBiBoaRdsDataSchema
+from nessie.jobs.bi_refresh_boa_advising_schemas import RefreshBiBoaAdvisingSchemas
 from nessie.jobs.chained_import_student_population import ChainedImportStudentPopulation
 from nessie.jobs.create_advisor_schema import CreateAdvisorSchema
 from nessie.jobs.create_asc_advising_notes_schema import CreateAscAdvisingNotesSchema
@@ -63,7 +65,6 @@ from nessie.jobs.index_advising_notes import IndexAdvisingNotes
 from nessie.jobs.index_enrollments import IndexEnrollments
 from nessie.jobs.migrate_sis_advising_note_attachments import MigrateSisAdvisingNoteAttachments
 from nessie.jobs.query_canvas_data_2_snapshot import QueryCanvasData2Snapshot
-from nessie.jobs.refresh_boa_rds_data_schema import RefreshBoaRdsDataSchema
 from nessie.jobs.refresh_boac_cache import RefreshBoacCache
 from nessie.jobs.refresh_canvas_data_2_schema import RefreshCanvasData2Schema
 from nessie.jobs.refresh_canvas_data_catalog import RefreshCanvasDataCatalog
@@ -336,10 +337,17 @@ def verify_sis_advising_note_attachments(datestamp):
     return respond_with_status(job_started)
 
 
-@app.route('/api/job/refresh_boa_rds_data_schema', methods=['POST'])
+@app.route('/api/job/bi_refresh_boa_rds_data_schema', methods=['POST'])
 @auth_required
-def refresh_boa_rds_data_schema():
-    job_started = RefreshBoaRdsDataSchema().run_async()
+def refresh_bi_boa_rds_data_schema():
+    job_started = RefreshBiBoaRdsDataSchema().run_async()
+    return respond_with_status(job_started)
+
+
+@app.route('/api/job/bi_refresh_boa_advising_schemas', methods=['POST'])
+@auth_required
+def refresh_bi_boa_advising_schemas():
+    job_started = RefreshBiBoaAdvisingSchemas().run_async()
     return respond_with_status(job_started)
 
 
