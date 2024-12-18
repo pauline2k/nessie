@@ -27,9 +27,9 @@
 -- CREATE BOAC RDS EXTERNAL SCHEMA & DATABASE 
 --------------------------------------------------------------------------------------
 
-CREATE EXTERNAL SCHEMA {redshift_schema_boa_rds_data}
+CREATE EXTERNAL SCHEMA {bi_redshift_schema_boa_rds_data}
 FROM data catalog
-DATABASE '{redshift_schema_boa_rds_data}'
+DATABASE '{bi_redshift_schema_boa_rds_data}'
 IAM_ROLE '{redshift_iam_role}'
 CREATE EXTERNAL DATABASE IF NOT EXISTS;
 
@@ -42,7 +42,7 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
 --------------------------------------------------------------------------------------
 -- External Table : "alert_views"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."alert_views" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."alert_views" (
     "alert_id" INTEGER,
     "viewer_id" INTEGER,
     "created_at" TIMESTAMP,
@@ -50,13 +50,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."alert_views" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/alert_views/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/alert_views/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "alerts"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."alerts" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."alerts" (
     "id" INTEGER,
     "sid" VARCHAR(80),
     "alert_type" VARCHAR(80),
@@ -68,26 +68,26 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."alerts" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/alerts/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/alerts/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "appointments_read"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."appointments_read" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."appointments_read" (
     "appointment_id" VARCHAR(255),
     "viewer_id" INTEGER,
     "created_at" TIMESTAMP
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/appointments_read/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/appointments_read/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "authorized_users"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."authorized_users" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."authorized_users" (
     "created_at" TIMESTAMP,
     "updated_at" TIMESTAMP,
     "id" INTEGER,
@@ -105,13 +105,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."authorized_users" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/authorized_users/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/authorized_users/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "cohort_filter_events"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."cohort_filter_events" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."cohort_filter_events" (
     "id" INTEGER,
     "cohort_filter_id" INTEGER,
     "sid" VARCHAR(80),
@@ -120,13 +120,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."cohort_filter_events" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/cohort_filter_events/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/cohort_filter_events/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "cohort_filters"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."cohort_filters" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."cohort_filters" (
     "created_at" TIMESTAMP,
     "updated_at" TIMESTAMP,
     "id" INTEGER,
@@ -140,13 +140,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."cohort_filters" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/cohort_filters/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/cohort_filters/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "degree_progress_categories"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_categories" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."degree_progress_categories" (
     "id" INTEGER,
     "parent_category_id" INTEGER,
     "template_id" INTEGER,
@@ -166,37 +166,37 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_categori
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/degree_progress_categories/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/degree_progress_categories/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "degree_progress_category_unit_requirements"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_category_unit_requirements" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."degree_progress_category_unit_requirements" (
     "category_id" INTEGER,
     "unit_requirement_id" INTEGER
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/degree_progress_category_unit_requirements/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/degree_progress_category_unit_requirements/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "degree_progress_course_unit_requirements"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_course_unit_requirements" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."degree_progress_course_unit_requirements" (
     "course_id" INTEGER,
     "unit_requirement_id" INTEGER
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/degree_progress_course_unit_requirements/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/degree_progress_course_unit_requirements/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "degree_progress_courses"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_courses" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."degree_progress_courses" (
     "section_id" INTEGER,
     "sid" VARCHAR(80),
     "term_id" INTEGER,
@@ -216,13 +216,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_courses"
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/degree_progress_courses/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/degree_progress_courses/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "degree_progress_notes"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_notes" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."degree_progress_notes" (
     "template_id" INTEGER,
     "body" VARCHAR(65535),
     "created_at" TIMESTAMP,
@@ -231,13 +231,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_notes" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/degree_progress_notes/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/degree_progress_notes/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "degree_progress_templates"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_templates" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."degree_progress_templates" (
     "id" INTEGER,
     "degree_name" VARCHAR(255),
     "advisor_dept_codes" ARRAY<VARCHAR(255)>,
@@ -251,13 +251,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_template
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/degree_progress_templates/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/degree_progress_templates/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "degree_progress_unit_requirements"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_unit_requirements" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."degree_progress_unit_requirements" (
     "id" INTEGER,
     "template_id" INTEGER,
     "name" VARCHAR(255),
@@ -269,13 +269,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."degree_progress_unit_req
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/degree_progress_unit_requirements/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/degree_progress_unit_requirements/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "json_cache"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."json_cache" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."json_cache" (
     "created_at" TIMESTAMP,
     "updated_at" TIMESTAMP,
     "id" INTEGER,
@@ -284,13 +284,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."json_cache" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/json_cache/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/json_cache/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "json_cache_staging" -- NOT IN BOAC schema.sql
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."json_cache_staging" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."json_cache_staging" (
     "created_at" TIMESTAMP,
     "updated_at" TIMESTAMP,
     "id" INTEGER,
@@ -299,25 +299,25 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."json_cache_staging" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/json_cache_staging/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/json_cache_staging/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "manually_added_advisees" -- NOT IN BOAC schema.sql
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."manually_added_advisees" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."manually_added_advisees" (
     "sid" VARCHAR(80),
     "created_at" TIMESTAMP
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/manually_added_advisees/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/manually_added_advisees/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "note_attachments"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."note_attachments" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."note_attachments" (
     "id" INTEGER,
     "note_id" INTEGER,
     "path_to_attachment" VARCHAR(255),
@@ -327,12 +327,12 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."note_attachments" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/note_attachments/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/note_attachments/';
 
 
 -- External Table : "note_template_attachments"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."note_template_attachments" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."note_template_attachments" (
     "id" INTEGER,
     "note_template_id" INTEGER,
     "path_to_attachment" VARCHAR(255),
@@ -342,26 +342,26 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."note_template_attachment
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/note_template_attachments/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/note_template_attachments/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "note_template_topics"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."note_template_topics" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."note_template_topics" (
     "id" INTEGER,
     "note_template_id" INTEGER,
     "topic" VARCHAR(50)
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/note_template_topics/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/note_template_topics/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "note_templates"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."note_templates" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."note_templates" (
     "id" INTEGER,
     "creator_id" INTEGER,
     "title" VARCHAR(255),
@@ -374,13 +374,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."note_templates" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/note_templates/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/note_templates/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "note_topics"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."note_topics" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."note_topics" (
     "id" INTEGER,
     "note_id" INTEGER,
     "topic" VARCHAR(50),
@@ -389,13 +389,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."note_topics" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/note_topics/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/note_topics/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "notes"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."notes" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."notes" (
     "id" INTEGER,
     "author_uid" VARCHAR(255),
     "author_name" VARCHAR(255),
@@ -414,38 +414,38 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."notes" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/notes/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/notes/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "notes_read"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."notes_read" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."notes_read" (
     "note_id" VARCHAR(255),
     "viewer_id" INTEGER,
     "created_at" TIMESTAMP
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/notes_read/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/notes_read/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "student_group_members"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."student_group_members" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."student_group_members" (
     "student_group_id" INTEGER,
     "sid" VARCHAR(80)
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/student_group_members/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/student_group_members/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "student_groups"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."student_groups" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."student_groups" (
     "id" INTEGER,
     "owner_id" INTEGER,
     "name" VARCHAR(255),
@@ -455,13 +455,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."student_groups" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/student_groups/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/student_groups/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "tool_settings"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."tool_settings" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."tool_settings" (
     "id" INTEGER,
     "key" VARCHAR(255),
     "value" VARCHAR(65535),
@@ -470,13 +470,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."tool_settings" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/tool_settings/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/tool_settings/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "topics"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."topics" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."topics" (
     "id" INTEGER,
     "topic" VARCHAR(50),
     "created_at" TIMESTAMP,
@@ -484,13 +484,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."topics" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/topics/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/topics/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "university_dept_members"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."university_dept_members" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."university_dept_members" (
     "university_dept_id" INTEGER,
     "authorized_user_id" INTEGER,
     "created_at" TIMESTAMP,
@@ -500,13 +500,13 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."university_dept_members"
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/university_dept_members/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/university_dept_members/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "university_depts"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."university_depts" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."university_depts" (
     "id" INTEGER,
     "dept_code" VARCHAR(80),
     "dept_name" VARCHAR(255),
@@ -515,20 +515,20 @@ CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."university_depts" (
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/university_depts/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/university_depts/';
 
 
 --------------------------------------------------------------------------------------
 -- External Table : "user_logins"
 --------------------------------------------------------------------------------------
-CREATE EXTERNAL TABLE "{redshift_schema_boa_rds_data}"."user_logins" (
+CREATE EXTERNAL TABLE "{bi_redshift_schema_boa_rds_data}"."user_logins" (
     "id" INTEGER,
     "uid" VARCHAR(255),
     "created_at" TIMESTAMP
 )
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS PARQUET
-LOCATION '{boa_rds_data_path}/user_logins/';
+LOCATION '{bi_loch_s3_boa_rds_data_path}/user_logins/';
 
 --------------------------------------------------------------------------------------
 -- END OF BOAC DATA EXT SCHEMA DDL STATEMENTS

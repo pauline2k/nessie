@@ -36,6 +36,24 @@ BCOP_SMTP_PORT = 587
 BCOP_SMTP_SERVER = 'bcop.berkeley.edu'
 BCOP_SMTP_USERNAME = None
 
+# BI Reports Configs
+# Loch S3
+BI_LOCH_S3_BOA_RDS_DATA_PATH_TEST = 'boa-data/boa-rds/prod/2024-12-11/public'
+BI_LOCH_S3_BOA_RDS_DATA_PATH = 'boa-data'
+BI_LOCH_S3_BOA_RDS_DATA_PATH_DAILY = 'boa-data/boa-rds/qa'
+# Tableau
+BI_RDS_BOA_ADVISING_ROLE = 'BI BOA Advising readonly role'
+BI_RDS_CE3_USER = 'CE3 Tableau username'
+BI_RDS_TABLEAU_USER = 'Tableau username'
+# RDS
+BI_RDS_SCHEMA_BOA_ADVISING = 'BI BOA Advising RDS schemaname'
+BI_RDS_URI_LA_REPORTS = 'postgresql://reports:reports@localhost:5432/reports'
+# Redshift
+BI_BOA_RDS_ZERO_COUNT_ACCEPTABLE = False
+BI_REDSHIFT_LA_REPORTS_DBLINK_GROUP = 'BI Reports dblink group'
+BI_REDSHIFT_SCHEMA_BOA_ADVISING = 'BI BOA Advising Redshift schemaname'
+BI_REDSHIFT_SCHEMA_BOA_RDS_DATA = 'BI BOA RDS Data Redshift External schemaname'
+
 CAS_SERVER = 'https://auth-test.berkeley.edu/cas/'
 CAS_LOGOUT_URL = 'https://auth-test.berkeley.edu/cas/logout'
 
@@ -69,10 +87,6 @@ ASC_ATHLETES_API_URL = 'https://secreturl.berkeley.edu/intensives.php'
 ASC_ATHLETES_API_KEY = 'secret'
 # We cut over on this day of the year, on or about August 1.
 ASC_ACAD_YR_CUTOVER = 214
-
-# TODO: Remove next line once daily ingest is set up.
-BOA_RDS_TEST_DATE_PATH = 'Temporary test path'
-BOA_RDS_ZERO_COUNT_ACCEPTABLE = False
 
 BOAC_REFRESHERS = [
     {
@@ -171,9 +185,6 @@ LOCH_S3_PROTECTED_BUCKET = 'protected_bucket_name'
 LOCH_S3_PUBLIC_BUCKET = 'public_bucket_name'
 LOCH_S3_REGION = 'us-west-2'
 
-LOCH_S3_BOA_RDS_DATA_PATH = 'boa-data'
-LOCH_S3_BOA_RDS_DATA_PATH_DAILY = 'boa/path/to/daily'
-
 LOCH_S3_CANVAS_DATA_PATH = 'canvas-data'
 LOCH_S3_CANVAS_DATA_PATH_DAILY = 'canvas/path/to/daily'
 LOCH_S3_CANVAS_DATA_PATH_HISTORICAL = 'canvas/path/to/historical'
@@ -231,9 +242,6 @@ RDS_SCHEMA_SIS_INTERNAL = 'sis_data'
 RDS_SCHEMA_STUDENT = 'student'
 RDS_SCHEMA_TERMS = 'terms'
 
-# Reports RDS schemas
-RDS_SCHEMA_BI_REPORTS_BOA_ADVISING = 'bi_reports_boa_advising'
-
 REDSHIFT_DATABASE = 'database'
 REDSHIFT_HOST = 'redshift cluster'
 REDSHIFT_PASSWORD = 'password'
@@ -249,20 +257,15 @@ REDSHIFT_APP_BOA_USER = 'boa redshift username'
 # Ripley limited access credentials to nessie rds and redshift
 RDS_APP_RIPLEY_USER = 'ripley rds username'
 
-# Tableau limited access credentials to nessie rds
-RDS_APP_TABLEAU_USER = 'tableau rds username'
-
 # RDS and Redshift readonly roles for dblink user mapping
 RDS_DBLINK_ROLE_DAMIEN = 'damien_role'
 RDS_DBLINK_ROLE_DIABLO = 'diablo_role'
 REDSHIFT_DBLINK_GROUP = 'nessie_dblink_group'
-REDSHIFT_LA_REPORTS_DBLINK_GROUP = 'la_reports_dblink_group'
 
 # The following internal schemas are consistent across environments and do not need to be overridden locally.
 REDSHIFT_SCHEMA_ADVISOR_INTERNAL = 'boac_advisor'
 REDSHIFT_SCHEMA_ASC = 'boac_advising_asc'
 REDSHIFT_SCHEMA_ASC_ADVISING_NOTES_INTERNAL = 'asc_advising_notes'
-REDSHIFT_SCHEMA_BI_REPORTS_BOA_ADVISING = 'bi_reports_boa_advising'
 REDSHIFT_SCHEMA_BOAC = 'boac_analytics'
 REDSHIFT_SCHEMA_COE = 'boac_advising_coe'
 REDSHIFT_SCHEMA_DATA_SCIENCE_ADVISING_INTERNAL = 'data_science_advising'
@@ -278,7 +281,6 @@ REDSHIFT_SCHEMA_YCBM_INTERNAL = 'ycbm_data'
 # The following external schemas vary between environments and do need to be overridden locally.
 REDSHIFT_SCHEMA_ADVISOR = 'External Advisor schema name'
 REDSHIFT_SCHEMA_ASC_ADVISING_NOTES = 'External ASC Advising Notes schema name'
-REDSHIFT_SCHEMA_BOA_RDS_DATA = 'External BOA RDS Data schema name'
 REDSHIFT_SCHEMA_CANVAS = 'External Canvas schema name'
 REDSHIFT_SCHEMA_CANVAS_DATA_2 = 'External Canavs Data 2 schema name'
 REDSHIFT_SCHEMA_COE_EXTERNAL = 'External COE schema name'
