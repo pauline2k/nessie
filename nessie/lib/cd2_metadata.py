@@ -33,19 +33,16 @@ def get_cd2_query_jobs_by_date_and_environment(date_str=None, environment=None):
     try:
         # Initialize the DynamoDB resource
         dynamodb_resource = dynamodb.get_client()
-
-        # Reference the DynamoDB table
         table = dynamodb_resource.Table(app.config['CD2_DYNAMODB_METADATA_TABLE'])
 
         if date_str is None:
-            # Get today's date as a string as default
-            today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-            date_str = today_str
+            date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
         app.logger.info(f'Querying with date_str: {date_str}, environment: {environment}')
 
+        cd2_query_jobs = []
+
         if environment:
-            # Use the GSI when environment is provided
             key_condition_expression = 'environment = :env AND begins_with(created_at, :date)'
             expression_attribute_values = {
                 ':env': environment,
@@ -57,24 +54,32 @@ def get_cd2_query_jobs_by_date_and_environment(date_str=None, environment=None):
                 KeyConditionExpression=key_condition_expression,
                 ExpressionAttributeValues=expression_attribute_values,
             )
+            cd2_query_jobs = response.get('Items', [])
+
         else:
-            # Use scan when environment is not provided
             filter_expression = 'begins_with(created_at, :date)'
             expression_attribute_values = {':date': date_str}
 
             response = table.scan(
                 FilterExpression=filter_expression,
                 ExpressionAttributeValues=expression_attribute_values,
-                ConsistentRead=True,
             )
+            cd2_query_jobs.extend(response.get('Items', []))
 
-        # Retrieve query jobs for the specified date (and environment, if provided)
-        cd2_query_jobs = response.get('Items', [])
+            # Handle pagination
+            while 'LastEvaluatedKey' in response:
+                response = table.scan(
+                    FilterExpression=filter_expression,
+                    ExpressionAttributeValues=expression_attribute_values,
+                    ExclusiveStartKey=response['LastEvaluatedKey'],
+                )
+                cd2_query_jobs.extend(response.get('Items', []))
 
+        app.logger.info(f'Found {len(cd2_query_jobs)} items.')
         return cd2_query_jobs
 
     except Exception as e:
-        app.logger.error(f'Error retrieving CD2 query jobs for date {date_str} and environment {environment}: {str(e)}')
+        app.logger.error(f'Error retrieving CD2 query jobs: {str(e)}')
         return []
 
 

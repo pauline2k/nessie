@@ -45,25 +45,30 @@ class RetrieveAndDispatchCD2FileUrls(BackgroundJob):
         datestamp = time.strftime('%Y-%m-%d', time.gmtime())
         s3_path = f'{app.config["LOCH_S3_CANVAS_DATA_2_PATH_DAILY"]}/{datestamp}'
         files_to_sync = []
+        tables_missing_file_urls = []
 
         for table_object in cd2_table_objects:
             app.logger.info(f'Getting presigned URLs for table {table_object["table"]}')
             # Get S3 presigned URLS for the resulting canvas data 2 query snapshot job objects.
             file_urls = canvas_data_2.get_cd2_file_urls(secret, headers, table_object['file_objects'])
 
-            # Prepare event payloads to invoke lambdas to process and dowload the table data asynchronously
-            files = [{'table': table_object['table'],
-                      's3_bucket': app.config['LOCH_S3_BUCKET'],
-                      's3_path': s3_path,
-                      'cd2_secret_name': app.config['CD2_SECRET_NAME'],
-                      'job_id': file_name.split('/')[0],
-                      'file_name': file_name.split('/')[1],
-                      'url': data['url']} for file_name, data in file_urls.json()['urls'].items()]
+            if file_urls:
+                # Prepare event payloads to invoke lambdas to process and dowload the table data asynchronously
+                files = [{'table': table_object['table'],
+                          's3_bucket': app.config['LOCH_S3_BUCKET'],
+                          's3_path': s3_path,
+                          'cd2_secret_name': app.config['CD2_SECRET_NAME'],
+                          'job_id': file_name.split('/')[0],
+                          'file_name': file_name.split('/')[1],
+                          'url': data['url']} for file_name, data in file_urls.json()['urls'].items()]
+            else:
+                tables_missing_file_urls.append(table_object['table'])
 
             app.logger.debug(f'File objects for table {table_object["table"]} : {files}')
             for file in files:
                 files_to_sync.append(file)
-        return files_to_sync
+
+        return tables_missing_file_urls, files_to_sync
 
     def dispatch_for_download(self, cd2_file_urls):
         lambda_function_name = app.config['CD2_INGEST_LAMBDA_NAME']
@@ -79,6 +84,10 @@ class RetrieveAndDispatchCD2FileUrls(BackgroundJob):
     def run(self, cleanup=True):
         # Find and Retrieve Active Canvas Data 2 Query Job from the Dynamo DB Metadata table
         cd2_table_snapshot_objects = []
+        success = 0
+        failure = 0
+        retrieve_download_urls_status = ''
+        dispatch_for_download_status = ''
         last_cd2_query_job = cd2_metadata.get_recent_cd2_query_job_by_date_and_environment()
 
         if last_cd2_query_job:
@@ -95,63 +104,91 @@ class RetrieveAndDispatchCD2FileUrls(BackgroundJob):
                 raise BackgroundJobError('Retrieve and Resync of snapshot has failed for the day. Aborting ingest')
 
             # Get downloadable URLs for all tables and dispatch jobs to Lambdas for S3 syncs
-            cd2_files_to_sync = self.retrieve_cd2_file_urls(cd2_table_snapshot_objects)
+            # Also get detials if any tables are missing file urls.
+            tables_missing_file_urls, cd2_files_to_sync = self.retrieve_cd2_file_urls(cd2_table_snapshot_objects)
             app.logger.debug(f'CD2 file urls retrieved successfully {cd2_files_to_sync}')
 
-            # Clean up CD2 locaton before file url dispatch for download
-            if cleanup:
-                app.logger.info('Clean up any objects from S3 location before Downloading new snapshot')
-                datestamp = time.strftime('%Y-%m-%d', time.gmtime())
-                cd2_daily_prefix = f'{app.config["LOCH_S3_CANVAS_DATA_2_PATH_DAILY"]}/{datestamp}'
-                delete_result = s3.delete_s3_location_with_prefix(cd2_daily_prefix)
-                if not delete_result:
-                    app.logger.error('Cleanup of obsolete CD2 snapshots before download failed.')
-                    raise BackgroundJobError('Cleanup of obsolete CD2 snapshots before download failed.')
-
-            # Dispatch files details with urls for processing to microservicce
-            dispatched_files = self.dispatch_for_download(cd2_files_to_sync)
-
-            success = 0
-            failure = 0
-            retrieve_download_urls_status = ''
-            dispatch_for_download_status = ''
-
-            for file in dispatched_files:
-                if file['dispatch_status']:
-                    success += 1
-                else:
-                    failure += 1
-
-            if failure > 0:
+            # We update metadata and abort dispatch for download if File URLs are missing for any table_objects
+            if tables_missing_file_urls:
+                # Update Canvas Data 2 Metadata table on Dynamo DB with metadata
+                app.logger.info('Updating CD2 metadata table with snapshot retrival and job status details')
+                # Build metadata updates
                 retrieve_download_urls_status = 'failed'
                 dispatch_for_download_status = 'failed'
+                metadata_updates = {
+                    'workflow_status': {
+                        'retrieve_download_urls_status': retrieve_download_urls_status,
+                        'dispatch_for_download_status': dispatch_for_download_status,
+                    },
+                }
+
+                update_status = cd2_metadata.update_cd2_metadata(
+                    primary_key_name='cd2_query_job_id',
+                    primary_key_value=last_cd2_query_job['cd2_query_job_id'],
+                    sort_key_name='created_at',
+                    sort_key_value=last_cd2_query_job['created_at'],
+                    metadata_updates=metadata_updates,
+                )
+
+                if update_status:
+                    app.logger.info('Metatdata updated with CD2 snapshot update status successfully')
+
+                raise BackgroundJobError(f'Encountered failures retrieving file URLs for \
+                                         following tables {tables_missing_file_urls}. Aborting ingest. \
+                                         Resync corrected snapshots from other stacks and retry')
+
+            # if we don't have missing file urls for table proceed with dispatch for download and update metadata accordingly
             else:
-                retrieve_download_urls_status = 'success'
-                dispatch_for_download_status = 'success'
 
-            # Update Canvas Data 2 Metadata table on Dynamo DB with metadata
-            app.logger.info('Updating CD2 metadata table with snapshot retrival and job status details')
-            # Build metadata updates
-            metadata_updates = {
-                'workflow_status': {
-                    'retrieve_download_urls_status': retrieve_download_urls_status,
-                    'dispatch_for_download_status': dispatch_for_download_status,
-                },
-            }
+                # Clean up CD2 locaton before file url dispatch for download
+                if cleanup:
+                    app.logger.info('Clean up any objects from S3 location before Downloading new snapshot')
+                    datestamp = time.strftime('%Y-%m-%d', time.gmtime())
+                    cd2_daily_prefix = f'{app.config["LOCH_S3_CANVAS_DATA_2_PATH_DAILY"]}/{datestamp}'
+                    delete_result = s3.delete_s3_location_with_prefix(cd2_daily_prefix)
+                    if not delete_result:
+                        app.logger.error('Cleanup of obsolete CD2 snapshots before download failed.')
+                        raise BackgroundJobError('Cleanup of obsolete CD2 snapshots before download failed.')
 
-            update_status = cd2_metadata.update_cd2_metadata(
-                primary_key_name='cd2_query_job_id',
-                primary_key_value=last_cd2_query_job['cd2_query_job_id'],
-                sort_key_name='created_at',
-                sort_key_value=last_cd2_query_job['created_at'],
-                metadata_updates=metadata_updates,
-            )
+                # Dispatch files details with urls for processing to microservicce
+                dispatched_files = self.dispatch_for_download(cd2_files_to_sync)
 
-            if update_status:
-                app.logger.info('Metatdata updated with CD2 snapshot update status successfully')
+                for file in dispatched_files:
+                    if file['dispatch_status']:
+                        success += 1
+                    else:
+                        failure += 1
 
-            app.logger.debug(f'Total files dispatched: {len(dispatched_files)}')
-            return (f'Query snapshot dispatch Process completed with Success: {success} and Failed:{failure}. All done !')
+                if failure > 0:
+                    retrieve_download_urls_status = 'failed'
+                    dispatch_for_download_status = 'failed'
+                else:
+                    retrieve_download_urls_status = 'success'
+                    dispatch_for_download_status = 'success'
+
+                # Update Canvas Data 2 Metadata table on Dynamo DB with metadata
+                app.logger.info('Updating CD2 metadata table with snapshot retrival and job status details')
+                # Build metadata updates
+                metadata_updates = {
+                    'workflow_status': {
+                        'retrieve_download_urls_status': retrieve_download_urls_status,
+                        'dispatch_for_download_status': dispatch_for_download_status,
+                    },
+                }
+
+                update_status = cd2_metadata.update_cd2_metadata(
+                    primary_key_name='cd2_query_job_id',
+                    primary_key_value=last_cd2_query_job['cd2_query_job_id'],
+                    sort_key_name='created_at',
+                    sort_key_value=last_cd2_query_job['created_at'],
+                    metadata_updates=metadata_updates,
+                )
+
+                if update_status:
+                    app.logger.info('Metatdata updated with CD2 snapshot update status successfully')
+
+                app.logger.debug(f'Total files dispatched: {len(dispatched_files)}')
+                return (f'Query snapshot dispatch Process completed with Success: {success} and Failed:{failure}. All done !')
 
         else:
             return ('No CD2 query snapshot job triggered for today. Skipping refresh')

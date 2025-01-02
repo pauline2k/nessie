@@ -130,6 +130,16 @@ def schedule_all_jobs(force=False):
     )
     schedule_chained_job(
         sched,
+        'JOB_RESYNC_AND_REFRESH_CD2_SNAPSHOTS',
+        [
+            ResyncCorrectedCD2Snapshots,
+            RetrieveAndDispatchCD2FileUrls,
+            RefreshCanvasData2Schema,
+        ],
+        force,
+    )
+    schedule_chained_job(
+        sched,
         'JOB_SYNC_CANVAS_DATA_2_SNAPSHOTS',
         [
             QueryCanvasData2Snapshot,

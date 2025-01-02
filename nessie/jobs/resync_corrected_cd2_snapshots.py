@@ -41,30 +41,36 @@ class ResyncCorrectedCD2Snapshots(BackgroundJob):
         corrected_snapshot_env = ''
         snapshot_resync_status = ''
         corrected_snapshot_job_id = ''
+        snapshot_retrieved_status = last_cd2_query_job['workflow_status']['snapshot_retrieved_status']
+        retrieve_download_urls_status = last_cd2_query_job['workflow_status']['retrieve_download_urls_status']
 
         if last_cd2_query_job:
-            if last_cd2_query_job['workflow_status']['snapshot_retrieved_status'] == 'success':
+            if snapshot_retrieved_status == 'success' and retrieve_download_urls_status == 'success':
                 app.logger.info('Resync not required as snapshot object retrieval is successful')
                 return (f'Resync not required as CD2 snapshot object retrieval for the {last_cd2_query_job["environment"]} was successful')
 
-            elif last_cd2_query_job['workflow_status']['snapshot_retrieved_status'] == 'failed':
+            elif snapshot_retrieved_status == 'failed' or retrieve_download_urls_status == 'failed':
                 app.logger.info(f'Snapshot objects retirval attempt failed on {last_cd2_query_job["environment"]}.')
                 app.logger.info('Starting resync process and checking for success in other environments')
 
                 # Get all available snapshot jobs for the day across environemnts from the common metadata table
                 todays_cd2_query_jobs = cd2_metadata.get_cd2_query_jobs_by_date_and_environment()
 
+                app.logger.debug(f'Retrieved {len(todays_cd2_query_jobs)} jobs for the day')
+
                 # Set corrected snapshot details tracking successful runs in other environments.
                 for job in todays_cd2_query_jobs:
-                    if job['workflow_status']['snapshot_retrieved_status'] == 'success':
+                    job_snapshot_retrieved_status = job['workflow_status']['snapshot_retrieved_status']
+                    job_retrieve_download_urls_status = job['workflow_status']['retrieve_download_urls_status']
+                    if job_snapshot_retrieved_status == 'success' and job_retrieve_download_urls_status == 'success':
                         corrected_snapshot_objects = job['snapshot_objects']
                         corrected_snapshot_env = job['environment']
                         corrected_snapshot_job_id = job['cd2_query_job_id']
                         snapshot_resync_status = 'success'
+
+                        app.logger.info(f'Found successful run on {job["environment"]} with job ID {job["cd2_query_job_id"]}')
                         break
 
-                # Update CD2 metadata for the failed run in current environment with corrected snapshot details
-                app.logger.info('Updating CD2 metadata table with corrected snapshot objects, environment, and resync_status')
                 # Build corrected snapshot metadata updates
                 metadata_updates = {
                     'corrected_snapshot_objects': corrected_snapshot_objects,
@@ -74,6 +80,9 @@ class ResyncCorrectedCD2Snapshots(BackgroundJob):
                         'snapshot_resync_status': snapshot_resync_status,
                     },
                 }
+
+                # Update CD2 metadata for the failed run in current environment with corrected snapshot details
+                app.logger.info(f'Updating CD2 metadata table with corrected snapshot objects, environment, and resync_status. {metadata_updates}')
 
                 update_status = cd2_metadata.update_cd2_metadata(
                     primary_key_name='cd2_query_job_id',
