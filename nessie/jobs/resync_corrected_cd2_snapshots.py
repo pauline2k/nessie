@@ -36,20 +36,19 @@ class ResyncCorrectedCD2Snapshots(BackgroundJob):
     def run(self, cleanup=True):
         # Find and Retrieve Active Canvas Data 2 Query Job from the Dynamo DB Metadata table
         last_cd2_query_job = cd2_metadata.get_recent_cd2_query_job_by_date_and_environment()
+        app.logger.debug(f'{last_cd2_query_job}')
 
         corrected_snapshot_objects = []
         corrected_snapshot_env = ''
         snapshot_resync_status = ''
         corrected_snapshot_job_id = ''
-        snapshot_retrieved_status = last_cd2_query_job['workflow_status']['snapshot_retrieved_status']
-        retrieve_download_urls_status = last_cd2_query_job['workflow_status']['retrieve_download_urls_status']
 
         if last_cd2_query_job:
-            if snapshot_retrieved_status == 'success' and retrieve_download_urls_status == 'success':
-                app.logger.info('Resync not required as snapshot object retrieval is successful')
-                return (f'Resync not required as CD2 snapshot object retrieval for the {last_cd2_query_job["environment"]} was successful')
 
-            elif snapshot_retrieved_status == 'failed' or retrieve_download_urls_status == 'failed':
+            if (
+                last_cd2_query_job['workflow_status']['snapshot_retrieved_status'] == 'failed'
+                or last_cd2_query_job['workflow_status']['retrieve_download_urls_status'] == 'failed'
+            ):
                 app.logger.info(f'Snapshot objects retirval attempt failed on {last_cd2_query_job["environment"]}.')
                 app.logger.info('Starting resync process and checking for success in other environments')
 
@@ -70,35 +69,52 @@ class ResyncCorrectedCD2Snapshots(BackgroundJob):
 
                         app.logger.info(f'Found successful run on {job["environment"]} with job ID {job["cd2_query_job_id"]}')
                         break
+                if snapshot_resync_status == 'success':
+                    # Build corrected snapshot metadata updates
+                    metadata_updates = {
+                        'corrected_snapshot_objects': corrected_snapshot_objects,
+                        'corrected_snapshot_env': corrected_snapshot_env,
+                        'corrected_snapshot_job_id': corrected_snapshot_job_id,
+                        'workflow_status': {
+                            'snapshot_resync_status': snapshot_resync_status,
+                        },
+                    }
 
-                # Build corrected snapshot metadata updates
-                metadata_updates = {
-                    'corrected_snapshot_objects': corrected_snapshot_objects,
-                    'corrected_snapshot_env': corrected_snapshot_env,
-                    'corrected_snapshot_job_id': corrected_snapshot_job_id,
-                    'workflow_status': {
-                        'snapshot_resync_status': snapshot_resync_status,
-                    },
-                }
+                    # Update CD2 metadata for the failed run in current environment with corrected snapshot details
+                    app.logger.info(f'Updating CD2 metadata table with corrected snapshot objects, environment, & resync_status. {metadata_updates}')
+                    update_status = cd2_metadata.update_cd2_metadata(
+                        primary_key_name='cd2_query_job_id',
+                        primary_key_value=last_cd2_query_job['cd2_query_job_id'],
+                        sort_key_name='created_at',
+                        sort_key_value=last_cd2_query_job['created_at'],
+                        metadata_updates=metadata_updates,
+                    )
 
-                # Update CD2 metadata for the failed run in current environment with corrected snapshot details
-                app.logger.info(f'Updating CD2 metadata table with corrected snapshot objects, environment, and resync_status. {metadata_updates}')
+                    if update_status:
+                        app.logger.info('Metatdata updated with CD2 snapshot update status successfully')
+                    else:
+                        app.logger.error('Metadata update failed')
 
-                update_status = cd2_metadata.update_cd2_metadata(
-                    primary_key_name='cd2_query_job_id',
-                    primary_key_value=last_cd2_query_job['cd2_query_job_id'],
-                    sort_key_name='created_at',
-                    sort_key_value=last_cd2_query_job['created_at'],
-                    metadata_updates=metadata_updates,
-                )
-
-                if update_status:
-                    app.logger.info('Metatdata updated with CD2 snapshot update status successfully')
+                    app.logger.info(f'Resync Corrected Snapshots successful for job {last_cd2_query_job["cd2_query_job_id"]}')
+                    return (f'Resync Corrected Snapshots successful for job {last_cd2_query_job["cd2_query_job_id"]}')
                 else:
-                    app.logger.error('Metadata update failed')
+                    app.logger.info('No successful CD2 snapshot retrieval run found in other stacks. Aborting resync')
+                    return ('No successful CD2 snapshot retrieval run found in other stacks. Aborting resync')
 
-                app.logger.info(f'Resync Corrected Snapshots successful for job {last_cd2_query_job["cd2_query_job_id"]}')
-                return (f'Resync Corrected Snapshots successful for job {last_cd2_query_job["cd2_query_job_id"]}')
+            elif last_cd2_query_job['workflow_status']['snapshot_retrieved_status'] == 'success':
+
+                if last_cd2_query_job['workflow_status']['retrieve_download_urls_status'] == 'success':
+                    app.logger.info('Resync not required as snapshot object and file URL retrieval is successful')
+                    return (
+                        f'Resync not required as CD2 snapshot object and file URL retrieval '
+                        f'for {last_cd2_query_job["environment"]} was successful'
+                    )
+
+                elif last_cd2_query_job['workflow_status']['retrieve_download_urls_status'] == '':
+                    app.logger.info('Snapshot object retrieval was successful. Waiting for File URL job to complete before next resync validation')
+                    return ('CD2 snapshot object retrieval successful. Waiting for File URL job to complete before next resync validation')
+            else:
+                return ('Resync not possible.')
 
         else:
             return ('No CD2 query snapshot job triggered for today. Skipping refresh')
