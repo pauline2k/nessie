@@ -296,7 +296,10 @@ CREATE EXTERNAL TABLE "{redshift_schema_canvas_data_2}"."assignments" (
 	"description" VARCHAR,
 	"position" INTEGER,
 	"title" VARCHAR(255),
-	"turnitin_settings" VARCHAR(255)
+	"turnitin_settings" VARCHAR(255),
+	"parent_assignment_id" BIGINT,
+	"type" VARCHAR(255),
+	"has_sub_assignments" BOOLEAN
 )
 ROW FORMAT DELIMITED
 FIELDS TERMINATED BY '\t'
