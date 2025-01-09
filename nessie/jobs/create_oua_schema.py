@@ -23,7 +23,7 @@ SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED HEREUNDER IS PROVIDED
 ENHANCEMENTS, OR MODIFICATIONS.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import current_app as app
 from nessie.externals import rds, redshift, s3
@@ -40,11 +40,15 @@ class CreateOUASchema(BackgroundJob):
         app.logger.info('Executing SQL...')
 
         s3_protected_bucket = app.config['LOCH_S3_PROTECTED_BUCKET']
-        oua_slate_sftp_path = app.config['LOCH_S3_SLATE_DATA_SFTP_PATH'] + '/' + self.get_sftp_date_offset() + '/'
         oua_daily_dest_path = get_s3_oua_daily_path() + '/admissions/'
 
         # Gets list of keys under SFTP prefix and looks for csv files to migrate to OUA daily location
+        oua_slate_sftp_path = self.get_slate_sftp_path()
         keys = s3.get_keys_with_prefix(oua_slate_sftp_path, full_objects=False, bucket=s3_protected_bucket)
+        # If today's date returns nothing, try yesterday.
+        if not len(keys):
+            oua_slate_sftp_path = self.get_slate_sftp_path(days_offset=1)
+            keys = s3.get_keys_with_prefix(oua_slate_sftp_path, full_objects=False, bucket=s3_protected_bucket)
 
         if len(keys) > 0:
             for source_key in keys:
@@ -76,7 +80,6 @@ class CreateOUASchema(BackgroundJob):
             raise BackgroundJobError('OUA Slate schema creation job failed to create rds tables and indexes.')
 
     @staticmethod
-    def get_sftp_date_offset():
-        current_date = datetime.now()
-        date_part = current_date.strftime('%Y/%m/%d')
-        return date_part
+    def get_slate_sftp_path(days_offset=0):
+        offset_date = datetime.now() - timedelta(days=days_offset)
+        return app.config['LOCH_S3_SLATE_DATA_SFTP_PATH'] + '/' + offset_date.strftime('%Y/%m/%d') + '/'
