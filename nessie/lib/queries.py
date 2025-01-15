@@ -367,6 +367,7 @@ def stream_edl_profile_terms():
               r.terms_in_attendance,
               r.total_cumulative_gpa_nbr,
               r.total_units_completed_qty,
+              a.acad_standing_action,
               a.acad_standing_status,
               a.action_date,
               t.gpa

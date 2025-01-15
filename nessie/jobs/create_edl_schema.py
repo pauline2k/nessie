@@ -420,6 +420,7 @@ class ProfileFeedBuilder(ConcurrentFeedBuilder):
         feed['academicStatus'] = academic_status
         if latest_academic_standing:
             feed['academicStanding'] = {
+                'action': latest_academic_standing['acad_standing_action'],
                 'actionDate': str(latest_academic_standing['action_date']),
                 'status': latest_academic_standing['acad_standing_status'],
                 'termName': term_name_for_sis_id(latest_academic_standing['term_id']),
