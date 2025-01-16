@@ -99,7 +99,8 @@ AS (
         s.student_id AS sid,
         s.semester_year_term_cd AS term_id,
         s.academic_standing_cd AS acad_standing_action,
-        s.academic_standing_category_cd AS acad_standing_status,
+        -- BOAC-5320: at present, DIQ (Disqualification) seems to be an error for SUB (Subject to Disqualification).
+        (CASE s.academic_standing_category_cd WHEN 'DIQ' THEN 'SUB' ELSE s.academic_standing_category_cd END) AS acad_standing_status,
         s.action_dt AS action_date
     FROM {redshift_schema_edl_external}.student_academic_standing_data s
     JOIN (
