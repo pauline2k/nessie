@@ -143,6 +143,9 @@ class BackgroundJob(object):
 
 class ChainedBackgroundJob(BackgroundJob):
 
+    # Disable status logging, since individual steps within the chain will log their own statuses and send their own notifications.
+    status_logging_enabled = False
+
     def run(self, steps):
         for step in steps:
             if not step.run_wrapped():
