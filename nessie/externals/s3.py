@@ -279,12 +279,11 @@ def upload_from_response(response, s3_key, on_stream_opened=None):
                 'ContentType': 'text/plain',
             })
         session = get_session()
-        # smart_open needs to be told to ignore the .gz extension, or it will smartly attempt to double-compress it.
         with smart_open.open(
             s3_url,
             'wb',
-            ignore_ext=True,
-            transport_params=dict(session=session, multipart_upload_kwargs=s3_upload_args),
+            compression='disable',
+            transport_params=dict(client=session.client('s3'), client_kwargs=s3_upload_args),
         ) as s3_out:
             for chunk in response.iter_content(chunk_size=1024):
                 s3_out.write(chunk)
