@@ -82,10 +82,11 @@ class CreateCoeSchema(BackgroundJob):
                 'sat1math': row_for_student.get('sat1math'),
                 'sat2math': row_for_student.get('sat2math'),
                 'inMet': row_for_student.get('in_met'),
-                'gradTerm': row_for_student.get('grad_term'),
-                'gradYear': row_for_student.get('grad_year'),
                 'probation': row_for_student.get('probation'),
                 'status': row_for_student.get('status'),
+                'acadStatus': row_for_student.get('acad_status'),
+                'acadStatusTermId': row_for_student.get('acad_status_term_id'),
+                'gradTermId': row_for_student.get('grad_term_id'),
             }
             profile_rows.append(encoded_tsv_row([sid, json.dumps(coe_profile)]))
 
@@ -123,8 +124,8 @@ class CreateCoeSchema(BackgroundJob):
             columns = [
                 'sid', 'advisor_ldap_uid', 'gender', 'ethnicity', 'minority',
                 'did_prep', 'prep_eligible', 'did_tprep', 'tprep_eligible',
-                'sat1read', 'sat1math', 'sat2math', 'in_met', 'grad_term', 'grad_year',
-                'probation', 'status',
+                'sat1read', 'sat1math', 'sat2math', 'in_met',
+                'probation', 'status', 'acad_status', 'acad_status_term_id', 'grad_term_id',
             ]
             result = transaction.insert_bulk(
                 f'INSERT INTO {rds_schema}.students ({", ".join(columns)}) VALUES %s',
