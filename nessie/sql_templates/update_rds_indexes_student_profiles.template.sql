@@ -54,11 +54,12 @@ TRUNCATE {rds_schema_student}.student_profile_index;
 INSERT INTO {rds_schema_student}.student_profile_index
   (sid, uid, first_name, last_name, level, gpa, units, transfer, expected_grad_term, terms_in_attendance)
 SELECT
-  sid, uid, first_name, last_name, level, gpa, units, transfer, expected_grad_term, terms_in_attendance
+  DISTINCT ON (uid) sid, uid, first_name, last_name, level, gpa, units, transfer, expected_grad_term, terms_in_attendance
 FROM dblink('{rds_dblink_to_redshift}',$REDSHIFT$
   SELECT *
   FROM {redshift_schema_student}.student_profile_index
 $REDSHIFT$)
+ORDER BY uid, academic_career_status, NULLIF(TRIM(level),''), gpa, units, entering_term
 AS redshift_profile_index (
   sid VARCHAR,
   uid VARCHAR,
@@ -98,11 +99,7 @@ UPDATE {rds_schema_student}.student_profile_index spidx
   WHERE p.sid = spidx.sid
   AND p.profile::json->'sisProfile'->>'matriculation' IS NOT NULL;
 
-
---
--- Main student profile index table
---
-
+---
 
 TRUNCATE {rds_schema_student}.academic_standing;
 
