@@ -59,7 +59,6 @@ FROM dblink('{rds_dblink_to_redshift}',$REDSHIFT$
   SELECT *
   FROM {redshift_schema_student}.student_profile_index
 $REDSHIFT$)
-ORDER BY uid, academic_career_status, NULLIF(TRIM(level),''), gpa, units, entering_term
 AS redshift_profile_index (
   sid VARCHAR,
   uid VARCHAR,
@@ -72,6 +71,7 @@ AS redshift_profile_index (
   expected_grad_term VARCHAR,
   terms_in_attendance INT
 )
+ORDER BY uid, NULLIF(TRIM(level),'') DESC NULLS LAST, expected_grad_term DESC NULLS LAST, terms_in_attendance DESC NULLS LAST, units DESC NULLS LAST
 ON CONFLICT (sid) DO UPDATE SET
   sid=EXCLUDED.sid, uid=EXCLUDED.uid, first_name=EXCLUDED.first_name, last_name=EXCLUDED.last_name,
   level=EXCLUDED.level, gpa=EXCLUDED.gpa, units=EXCLUDED.units, transfer=EXCLUDED.transfer,
